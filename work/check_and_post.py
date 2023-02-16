@@ -17,7 +17,7 @@ with open('token', 'rb') as f:
     SW_V = token_json['SW_V']
     MD_TOKEN = token_json['MD_TOKEN']
 
-sw_params = {'oauth_token': SW_TOKEN, 'v': SW_V}
+sw_params = {'oauth_token': SW_TOKEN, 'v': SW_V, 'locate': 'ja'}
 sw_resp = requests.get(SW_ENDPOINT, params=sw_params)
 
 resp_json = sw_resp.json()['response']
@@ -38,10 +38,12 @@ new_checkins = [item for item in checkins if item['id'] in new_checkin_id]
 for new_checkin in new_checkins[:3]:
     venue_name = new_checkin['venue']['name']
     checkin_id = new_checkin['id']
-    shout = new_checkin['shout']
+    shout = ''
+    if shout in new_checkin:
+        shout = f'({new_checkin['shout']})'
     params = {
         'access_token': MD_TOKEN,
-        'status': f"I'm at {venue_name}. ({shout}) " + SW_CHECKIN_URL.format(checkin_id),
+        'status': f"I'm at {venue_name}. {shout} " + SW_CHECKIN_URL.format(checkin_id),
         'visibilty': 'unlisted'
     }
 
