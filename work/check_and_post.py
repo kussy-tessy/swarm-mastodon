@@ -7,7 +7,7 @@ import urllib
 SW_ENDPOINT = 'https://api.foursquare.com/v2/users/self/checkins'
 MD_ENDPOINT = 'https://fedibird.com/api/v1/statuses'
 md_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-SW_CHECKIN_URL = 'https://www.swarmapp.com/opierio/checkin/{}'
+SW_VENUE_URL = 'https://ja.foursquare.com/v/{}'
 
 os.chdir('/work')
 
@@ -17,10 +17,11 @@ with open('token', 'rb') as f:
     SW_V = token_json['SW_V']
     MD_TOKEN = token_json['MD_TOKEN']
 
-sw_params = {'oauth_token': SW_TOKEN, 'v': SW_V, 'locate': 'ja'}
+sw_params = {'oauth_token': SW_TOKEN, 'v': SW_V, 'locale': 'ja'}
 sw_resp = requests.get(SW_ENDPOINT, params=sw_params)
 
 resp_json = sw_resp.json()['response']
+
 checkins = resp_json['checkins']['items']
 checkin_ids = [item['id'] for item in checkins]
 
@@ -35,16 +36,19 @@ for checkin_id in checkin_ids:
 
 new_checkins = [item for item in checkins if item['id'] in new_checkin_id]
 
-for new_checkin in new_checkins:
+# 危ないので5件まで
+for new_checkin in new_checkins[:5]:
+    if 'private' in new_checkin:
+        continue
     venue_name = new_checkin['venue']['name']
-    checkin_id = new_checkin['id']
+    venue_id = new_checkin['venue']['id']
     shout = ''
     if 'shout' in new_checkin:
         shout = f"({new_checkin['shout']})"
     params = {
         'access_token': MD_TOKEN,
-        'status': f"I'm at {venue_name}. {shout} " + SW_CHECKIN_URL.format(checkin_id),
-        'visibility': 'unlisted'
+        'status': f"I'm at {venue_name}. {shout} " + SW_VENUE_URL.format(venue_id),        
+        'visibility': "unlisted"
     }
 
     requests.post(url=MD_ENDPOINT, data=urllib.parse.urlencode(params), headers=md_headers)
