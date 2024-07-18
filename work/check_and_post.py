@@ -3,6 +3,7 @@ import pickle
 import requests
 import json
 import urllib
+import time
 
 SW_ENDPOINT = 'https://api.foursquare.com/v2/users/self/checkins'
 MD_ENDPOINT = 'https://fedibird.com/api/v1/statuses'
@@ -36,10 +37,19 @@ for checkin_id in checkin_ids:
 
 new_checkins = [item for item in checkins if item['id'] in new_checkin_id]
 
+current_time = int(time.time())
+
 # 危ないので5件まで
-for new_checkin in new_checkins[:5]:
-    if 'private' in new_checkin:
+for new_checkin in new_checkins[:5][::-1]:
+    if new_checkin['visibility'] == 'private':
         continue
+    
+    check_in_created_at = new_checkin['createdAt']
+    
+    # 60分より前なら無視
+    if current_time - check_in_created_at >= 3600:
+        continue
+
     venue_name = new_checkin['venue']['name']
     venue_id = new_checkin['venue']['id']
     shout = ''
